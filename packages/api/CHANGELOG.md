@@ -1,5 +1,13 @@
 # @blobscan/api
 
+## 0.18.0
+
+### Minor Changes
+
+- [#700](https://github.com/Blobscan/blobscan/pull/700) [`b90971b`](https://github.com/Blobscan/blobscan/commit/b90971b1415e32c23c530feff1fc2dd1560d377d) Thanks [@PJColombo](https://github.com/PJColombo)! - Added support for fetching blocks by slot
+
+- [#713](https://github.com/Blobscan/blobscan/pull/713) [`27cddc4`](https://github.com/Blobscan/blobscan/commit/27cddc45aeb593d1dd9a1c693d5bfe69b6569f9a) Thanks [@PJColombo](https://github.com/PJColombo)! - Renamed and modified handleReorgedSlots to handleReorg, which now receives a set of rewinded and forwarded block hashes.
+
 ## 0.17.1
 
 ### Patch Changes
