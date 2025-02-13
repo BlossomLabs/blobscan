@@ -3,6 +3,8 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import type { NextRouter } from "next/router";
 
+import { getEthereumConfig } from "@blobscan/eth-config";
+
 import { Card } from "~/components/Cards/Card";
 import { BlobTransactionCard } from "~/components/Cards/SurfaceCards/BlobTransactionCard";
 import { Copyable } from "~/components/Copyable";
@@ -15,21 +17,18 @@ import { NavArrows } from "~/components/NavArrows";
 import { BlockStatus } from "~/components/Status";
 import { getFirstBlobNumber } from "~/components/content";
 import { api } from "~/api-client";
+import { env } from "~/env.mjs";
 import NextError from "~/pages/_error";
 import type { BlockWithExpandedBlobsAndTransactions } from "~/types";
 import {
-  BLOB_GAS_LIMIT_PER_BLOCK,
   buildBlockExternalUrl,
   buildSlotExternalUrl,
   deserializeFullBlock,
   formatBytes,
   formatNumber,
   formatTimestamp,
-  GAS_PER_BLOB,
-  MAX_BLOBS_PER_BLOCK,
   performDiv,
   pluralize,
-  TARGET_BLOB_GAS_PER_BLOCK,
 } from "~/utils";
 
 function performBlockQuery(router: NextRouter) {
@@ -72,6 +71,13 @@ const Block: NextPage = function () {
   let detailsFields: DetailsLayoutProps["fields"] | undefined;
 
   if (blockData) {
+    const {
+      blobSize,
+      blockBlobGasLimit,
+      maxBlobsPerBlock,
+      targetBlobGasPerBlock,
+    } = getEthereumConfig(env.NEXT_PUBLIC_NETWORK_NAME, blockData.slot);
+
     const totalBlockBlobSize = blockData?.transactions.reduce(
       (acc, { blobs }) => {
         const totalBlobsSize = blobs.reduce(
@@ -148,8 +154,8 @@ const Block: NextPage = function () {
           <div>
             {formatBytes(totalBlockBlobSize)}
             <span className="ml-1 text-contentTertiary-light dark:text-contentTertiary-dark">
-              ({formatNumber(totalBlockBlobSize / GAS_PER_BLOB)}{" "}
-              {pluralize("blob", totalBlockBlobSize / GAS_PER_BLOB)})
+              ({formatNumber(totalBlockBlobSize / blobSize)}{" "}
+              {pluralize("blob", totalBlockBlobSize / blobSize)})
             </span>
           </div>
         ),
@@ -162,20 +168,25 @@ const Block: NextPage = function () {
       },
       {
         name: "Blob Gas Used",
-        helpText: `The total blob gas used by the blobs in this block, along with its percentage relative to both the total blob gas limit and the blob gas target (${(
-          TARGET_BLOB_GAS_PER_BLOCK / 1024
-        ).toFixed(0)} KB).`,
-        value: <BlobGasUsageDisplay blobGasUsed={blockData.blobGasUsed} />,
+        helpText: `The total blob gas used by the blobs in this block, along with its percentage relative to both the total blob gas limit and the blob gas target (${
+          targetBlobGasPerBlock / BigInt(1024)
+        } KB).`,
+        value: (
+          <BlobGasUsageDisplay
+            slot={blockData.slot}
+            blobGasUsed={blockData.blobGasUsed}
+          />
+        ),
       },
       {
         name: "Blob Gas Limit",
         helpText: "The maximum blob gas limit for this block.",
         value: (
           <div>
-            {formatNumber(BLOB_GAS_LIMIT_PER_BLOCK)}
+            {formatNumber(blockBlobGasLimit)}
             <span className="ml-1 text-contentTertiary-light dark:text-contentTertiary-dark">
-              ({formatNumber(MAX_BLOBS_PER_BLOCK)}{" "}
-              {pluralize("blob", MAX_BLOBS_PER_BLOCK)} per block)
+              ({formatNumber(maxBlobsPerBlock)}{" "}
+              {pluralize("blob", maxBlobsPerBlock)} per block)
             </span>
           </div>
         ),
